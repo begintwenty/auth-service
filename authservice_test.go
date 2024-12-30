@@ -1,10 +1,12 @@
 package authservice_test
 
 import (
-	"authservice"
-	"authservice/domain"
 	"context"
 	"testing"
+
+	"github.com/dev-mantas/authservice/domain"
+
+	"github.com/dev-mantas/authservice"
 )
 
 type UserService struct {

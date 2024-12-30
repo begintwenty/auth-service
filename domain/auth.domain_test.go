@@ -1,8 +1,9 @@
 package domain_test
 
 import (
-	"authservice/domain"
 	"testing"
+
+	"github.com/dev-mantas/authservice/domain"
 )
 
 func TestNewUserID(t *testing.T) {

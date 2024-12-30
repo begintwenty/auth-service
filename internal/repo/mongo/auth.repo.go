@@ -1,8 +1,9 @@
 package mon
 
 import (
-	"authservice/domain"
 	"context"
+
+	"github.com/dev-mantas/authservice/domain"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"

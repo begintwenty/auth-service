@@ -1,12 +1,13 @@
 package authservice
 
 import (
-	"authservice/domain"
-	"authservice/pkg/token"
 	"context"
 	"fmt"
 	"net/http"
 	"strings"
+
+	"github.com/dev-mantas/authservice/domain"
+	"github.com/dev-mantas/authservice/pkg/token"
 
 	"github.com/gin-gonic/gin"
 )

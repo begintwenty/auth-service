@@ -1,10 +1,11 @@
 package token
 
 import (
-	"authservice/domain"
 	"context"
 	"errors"
 	"time"
+
+	"github.com/dev-mantas/authservice/domain"
 
 	"github.com/golang-jwt/jwt"
 	"github.com/spf13/viper"
