@@ -5,8 +5,6 @@ import (
 	"errors"
 	"time"
 
-	"github.com/dev-mantas/authservice/domain"
-
 	"github.com/golang-jwt/jwt"
 	"github.com/spf13/viper"
 )
@@ -16,7 +14,7 @@ type TokenClaims struct {
 	jwt.StandardClaims
 }
 
-func GenJWT(ctx context.Context, userId domain.UserID, rememberMe bool) (string, error) {
+func GenJWT(ctx context.Context, userId string, rememberMe bool) (string, error) {
 	var expiresAt int64
 	switch rememberMe {
 	case true:
@@ -26,7 +24,7 @@ func GenJWT(ctx context.Context, userId domain.UserID, rememberMe bool) (string,
 	}
 
 	claims := TokenClaims{
-		ID: userId.AsString(),
+		ID: userId,
 		StandardClaims: jwt.StandardClaims{
 			IssuedAt: time.Now().Unix(),
 			// One day if remember me is false, and 30 days if remember me is true.
@@ -39,10 +37,10 @@ func GenJWT(ctx context.Context, userId domain.UserID, rememberMe bool) (string,
 	return token.SignedString([]byte(viper.GetString("SECRET_KEY")))
 }
 
-func GenPasswordResetJWT(userId domain.UserID) (string, error) {
+func GenPasswordResetJWT(userId string) (string, error) {
 	expiresAt := time.Now().Add((time.Minute * 15)).Unix()
 	claims := TokenClaims{
-		ID: userId.AsString(),
+		ID: userId,
 		StandardClaims: jwt.StandardClaims{
 			IssuedAt:  time.Now().Unix(),
 			ExpiresAt: expiresAt,
