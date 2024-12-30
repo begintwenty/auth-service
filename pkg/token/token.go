@@ -10,7 +10,7 @@ import (
 )
 
 type TokenClaims struct {
-	ID string `bson: "_id json:"id"`
+	ID string `bson:"_id" json:"id"`
 	jwt.StandardClaims
 }
 
