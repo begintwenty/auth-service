@@ -17,7 +17,7 @@ type Authenticable interface {
 }
 
 type UserRepo[T Authenticable] interface {
-	FetchUserByIDAsString(ctx context.Context, userID string) (*T, error)
+	FetchUserByIDAsString(ctx context.Context, userID string) (T, error)
 }
 
 type Service[T Authenticable] struct {
@@ -53,14 +53,17 @@ func (s *Service[T]) Authcheck(permissions ...string) gin.HandlerFunc {
 			return
 		}
 
-		// Check permissions via the interface
-		// for _, perm := range permissions {
-		// 	if !user.HasPermission(perm) {
-		// 		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Invalid permissions"})
-		// 		return
-		// 	}
-		// }
-		fmt.Println(user)
+		// If any permissions were passed in, check them
+		for _, perm := range permissions {
+			if !user.HasPermission(perm) {
+				c.AbortWithStatusJSON(http.StatusForbidden, gin.H{
+					"error": fmt.Sprintf("Missing permission: %s", perm),
+				})
+				return
+			}
+		}
+
+		// If all checks pass, set the current user in the context
 		c.Set("currentUser", user)
 		c.Next()
 	}
@@ -74,8 +77,6 @@ func (a *Service[T]) GetUserFromContext(c *gin.Context) *T {
 		return nil
 	}
 
-	// Because s.userRepo.FetchUserByIDAsString returns (*T, error),
-	// we stored *T in "currentUser". Here, we must cast it back to *T.
 	currentUser, ok := currentUserInterface.(*T)
 	if !ok {
 		fmt.Println("Couldn't cast current user to *T")
