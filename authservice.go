@@ -13,12 +13,10 @@ import (
 )
 
 type Authenticable interface {
-	// GetID returns the unique ID of the user
-	GetID() string
-
-	// HasPermission returns true if the user has the given permission
+	GetUserID() string
 	HasPermission(permission string) bool
 }
+
 type UserRepo[T Authenticable] interface {
 	FetchUserByID(ctx context.Context, userID string) (T, error)
 }
