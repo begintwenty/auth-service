@@ -12,40 +12,30 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type AuthRepo interface {
-	FetchUserByID(ctx context.Context, userId domain.UserID) (*domain.Auth, error)
+type UserRepo interface {
+	FetchUserByID(ctx context.Context, userId string) (*User, error)
 	Store(ctx context.Context, auth domain.Auth) error
 }
 
 type Service struct {
-	authRepo AuthRepo
+	userRepo UserRepo
 }
 
 type User struct {
-	UserId string
+	UserId      string
+	Permissions map[string]bool
 }
 
-func New(authRepo AuthRepo) *Service {
+func New(userRepo UserRepo) *Service {
 	return &Service{
-		authRepo: authRepo,
+		userRepo: userRepo,
 	}
 }
 
-func (s *Service) Store(ctx context.Context, auth domain.Auth) error {
-	return s.authRepo.Store(ctx, auth)
-}
-
-func (s *Service) Authcheck(permissions ...domain.Permission) gin.HandlerFunc {
+func (s *Service) Authcheck(permissions ...string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		const bearerPrefix = "Bearer "
 		authHeader := c.GetHeader("Authorization")
-
-		// var tokenString string
-		// if authHeader != "" && strings.HasPrefix(authHeader, bearerPrefix)  {
-		// 	tokenString = strings.TrimPrefix(authHeader, bearerPrefix)
-		// }else {
-		// 	return nil, errors.New("bearer token missing or invalid")
-		// }
 
 		if authHeader == "" || !strings.HasPrefix(authHeader, bearerPrefix) {
 			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "Invalid token"})
@@ -59,29 +49,23 @@ func (s *Service) Authcheck(permissions ...domain.Permission) gin.HandlerFunc {
 			return
 		}
 
-		verifiedUserID, err := domain.VerifyUserID(unVerifiedUserID)
+		user, err := s.userRepo.FetchUserByID(c, unVerifiedUserID)
 		if err != nil {
 			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "Invalid token"})
 			return
 		}
 
-		auth, err := s.authRepo.FetchUserByID(c, *verifiedUserID)
-		if err != nil {
-			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "Invalid token"})
-			return
-		}
-
-		hasValidPerm := s.CheckPermissions(auth, permissions)
+		hasValidPerm := s.CheckPermissions(user, permissions)
 		if !hasValidPerm {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Invalid permissions"})
 			return
 		}
-		setCurrentAuth(c, *auth)
+		setCurrentAuth(c, *user)
 		c.Next()
 	}
 }
 
-func setCurrentAuth(c *gin.Context, auth domain.Auth) {
+func setCurrentAuth(c *gin.Context, auth User) {
 	// currentUser := user.ToCurrentUser()
 	c.Set("currentAuth", &auth)
 
@@ -104,9 +88,9 @@ func (a *Service) GetAuthFromContext(c *gin.Context) *domain.Auth {
 	return currentAuth
 }
 
-func (a *Service) CheckPermissions(auth *domain.Auth, permissions []domain.Permission) bool {
+func (a *Service) CheckPermissions(user *User, permissions []string) bool {
 	for _, permission := range permissions {
-		if hasPermission, exists := auth.Permissions[permission]; !exists || !hasPermission {
+		if hasPermission, exists := user.Permissions[permission]; !exists || !hasPermission {
 			// Permission is either not present or explicitly set to false
 			return false
 		}
