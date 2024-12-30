@@ -61,7 +61,7 @@ func (s *Service[T]) Authcheck(permissions ...string) gin.HandlerFunc {
 		// 		return
 		// 	}
 		// }
-
+		fmt.Println(user)
 		c.Set("currentUser", user)
 		c.Next()
 	}
