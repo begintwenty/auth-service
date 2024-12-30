@@ -18,7 +18,7 @@ type Authenticable interface {
 }
 
 type UserRepo[T Authenticable] interface {
-	FetchUserByIDAsString(ctx context.Context, userID string) (T, error)
+	FetchUserByIDAsString(ctx context.Context, userID string) (*T, error)
 }
 
 type Service[T Authenticable] struct {
@@ -48,19 +48,19 @@ func (s *Service[T]) Authcheck(permissions ...string) gin.HandlerFunc {
 			return
 		}
 
-		user, err := s.userRepo.FetchUserByID(c, unVerifiedUserID)
+		user, err := s.userRepo.FetchUserByIDAsString(c, unVerifiedUserID)
 		if err != nil {
 			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "Invalid token"})
 			return
 		}
 
 		// Check permissions via the interface
-		for _, perm := range permissions {
-			if !user.HasPermission(perm) {
-				c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Invalid permissions"})
-				return
-			}
-		}
+		// for _, perm := range permissions {
+		// 	if !user.HasPermission(perm) {
+		// 		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Invalid permissions"})
+		// 		return
+		// 	}
+		// }
 
 		c.Set("currentUser", user)
 		c.Next()
