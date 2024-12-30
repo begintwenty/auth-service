@@ -12,27 +12,28 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type UserRepo interface {
-	FetchUserByUserIDAsString(ctx context.Context, userId string) (*User, error)
-	Store(ctx context.Context, auth domain.Auth) error
+type Authenticable interface {
+	// GetID returns the unique ID of the user
+	GetID() string
+
+	// HasPermission returns true if the user has the given permission
+	HasPermission(permission string) bool
+}
+type UserRepo[T Authenticable] interface {
+	FetchUserByID(ctx context.Context, userID string) (T, error)
 }
 
-type Service struct {
-	userRepo UserRepo
+type Service[T Authenticable] struct {
+	userRepo UserRepo[T]
 }
 
-type User struct {
-	UserId      string
-	Permissions map[string]bool
-}
-
-func New(userRepo UserRepo) *Service {
-	return &Service{
+func New[T Authenticable](userRepo UserRepo[T]) *Service[T] {
+	return &Service[T]{
 		userRepo: userRepo,
 	}
 }
 
-func (s *Service) Authcheck(permissions ...string) gin.HandlerFunc {
+func (s *Service[T]) Authcheck(permissions ...string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		const bearerPrefix = "Bearer "
 		authHeader := c.GetHeader("Authorization")
@@ -55,23 +56,20 @@ func (s *Service) Authcheck(permissions ...string) gin.HandlerFunc {
 			return
 		}
 
-		hasValidPerm := s.CheckPermissions(user, permissions)
-		if !hasValidPerm {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Invalid permissions"})
-			return
+		// Check permissions via the interface
+		for _, perm := range permissions {
+			if !user.HasPermission(perm) {
+				c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Invalid permissions"})
+				return
+			}
 		}
-		setCurrentAuth(c, *user)
+
+		c.Set("currentUser", user)
 		c.Next()
 	}
 }
 
-func setCurrentAuth(c *gin.Context, auth User) {
-	// currentUser := user.ToCurrentUser()
-	c.Set("currentAuth", &auth)
-
-}
-
-func (a *Service) GetAuthFromContext(c *gin.Context) *domain.Auth {
+func (a *Service[T]) GetAuthFromContext(c *gin.Context) *domain.Auth {
 	currentAuthInterface, exists := c.Get("currentAuth")
 	if !exists {
 		fmt.Println(" Current auth doesn't exist")
@@ -86,15 +84,4 @@ func (a *Service) GetAuthFromContext(c *gin.Context) *domain.Auth {
 	}
 
 	return currentAuth
-}
-
-func (a *Service) CheckPermissions(user *User, permissions []string) bool {
-	for _, permission := range permissions {
-		if hasPermission, exists := user.Permissions[permission]; !exists || !hasPermission {
-			// Permission is either not present or explicitly set to false
-			return false
-		}
-	}
-	// All required permissions are granted
-	return true
 }
