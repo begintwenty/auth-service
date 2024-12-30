@@ -69,19 +69,20 @@ func (s *Service[T]) Authcheck(permissions ...string) gin.HandlerFunc {
 	}
 }
 
-func (a *Service[T]) GetUserFromContext(c *gin.Context) *T {
+func (a *Service[T]) GetUserFromContext(c *gin.Context) T {
+	// Create a zero-value T (which will be `nil` if T = *User)
+	var zeroValue T
+
 	currentUserInterface, exists := c.Get("currentUser")
 	if !exists {
-		fmt.Println("Current user doesn't exist")
 		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"msg": "Unauthorized"})
-		return nil
+		return zeroValue
 	}
 
-	currentUser, ok := currentUserInterface.(*T)
+	currentUser, ok := currentUserInterface.(T)
 	if !ok {
-		fmt.Println("Couldn't cast current user to *T")
 		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"msg": "Unauthorized"})
-		return nil
+		return zeroValue
 	}
 
 	return currentUser
