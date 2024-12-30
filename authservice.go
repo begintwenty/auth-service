@@ -13,7 +13,7 @@ import (
 )
 
 type UserRepo interface {
-	FetchUserByID(ctx context.Context, userId string) (*User, error)
+	FetchUserByUserIDAsString(ctx context.Context, userId string) (*User, error)
 	Store(ctx context.Context, auth domain.Auth) error
 }
 
