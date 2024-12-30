@@ -53,7 +53,6 @@ func (s *Service[T]) Authcheck(permissions ...string) gin.HandlerFunc {
 			return
 		}
 
-		// If any permissions were passed in, check them
 		for _, perm := range permissions {
 			if !user.HasPermission(perm) {
 				c.AbortWithStatusJSON(http.StatusForbidden, gin.H{
@@ -63,14 +62,12 @@ func (s *Service[T]) Authcheck(permissions ...string) gin.HandlerFunc {
 			}
 		}
 
-		// If all checks pass, set the current user in the context
 		c.Set("currentUser", user)
 		c.Next()
 	}
 }
 
 func (a *Service[T]) GetUserFromContext(c *gin.Context) T {
-	// Create a zero-value T (which will be `nil` if T = *User)
 	var zeroValue T
 
 	currentUserInterface, exists := c.Get("currentUser")
