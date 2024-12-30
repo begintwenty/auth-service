@@ -18,7 +18,7 @@ type Authenticable interface {
 }
 
 type UserRepo[T Authenticable] interface {
-	FetchUserByID(ctx context.Context, userID string) (T, error)
+	FetchUserByIDAsString(ctx context.Context, userID string) (T, error)
 }
 
 type Service[T Authenticable] struct {
