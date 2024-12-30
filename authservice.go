@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/dev-mantas/authservice/domain"
 	"github.com/dev-mantas/authservice/pkg/token"
 
 	"github.com/gin-gonic/gin"
@@ -67,19 +66,22 @@ func (s *Service[T]) Authcheck(permissions ...string) gin.HandlerFunc {
 	}
 }
 
-func (a *Service[T]) GetUserFromContext(c *gin.Context) *domain.Auth {
-	currentAuthInterface, exists := c.Get("currentUser")
+func (a *Service[T]) GetUserFromContext(c *gin.Context) *T {
+	currentUserInterface, exists := c.Get("currentUser")
 	if !exists {
-		fmt.Println(" Current user doesn't exist")
-		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"msg": "Unauthorized"})
-		return nil
-	}
-	currentAuth, ok := currentAuthInterface.(*domain.Auth)
-	if !ok {
-		fmt.Println("Couldn't user current user")
+		fmt.Println("Current user doesn't exist")
 		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"msg": "Unauthorized"})
 		return nil
 	}
 
-	return currentAuth
+	// Because s.userRepo.FetchUserByIDAsString returns (*T, error),
+	// we stored *T in "currentUser". Here, we must cast it back to *T.
+	currentUser, ok := currentUserInterface.(*T)
+	if !ok {
+		fmt.Println("Couldn't cast current user to *T")
+		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"msg": "Unauthorized"})
+		return nil
+	}
+
+	return currentUser
 }
