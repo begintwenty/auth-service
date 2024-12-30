@@ -67,16 +67,16 @@ func (s *Service[T]) Authcheck(permissions ...string) gin.HandlerFunc {
 	}
 }
 
-func (a *Service[T]) GetAuthFromContext(c *gin.Context) *domain.Auth {
-	currentAuthInterface, exists := c.Get("currentAuth")
+func (a *Service[T]) GetUserFromContext(c *gin.Context) *domain.Auth {
+	currentAuthInterface, exists := c.Get("currentUser")
 	if !exists {
-		fmt.Println(" Current auth doesn't exist")
+		fmt.Println(" Current user doesn't exist")
 		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"msg": "Unauthorized"})
 		return nil
 	}
 	currentAuth, ok := currentAuthInterface.(*domain.Auth)
 	if !ok {
-		fmt.Println("Couldn't auth current user")
+		fmt.Println("Couldn't user current user")
 		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"msg": "Unauthorized"})
 		return nil
 	}
