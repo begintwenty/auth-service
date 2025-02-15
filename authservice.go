@@ -36,8 +36,12 @@ func (s *Service[T]) Authcheck(permissions ...string) gin.HandlerFunc {
 		authHeader := c.GetHeader("Authorization")
 
 		if authHeader == "" || !strings.HasPrefix(authHeader, bearerPrefix) {
-			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "Invalid token"})
-			return
+			token := c.Query("token")
+			if token == "" {
+				c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "Invalid token"})
+				return
+			}
+			authHeader = token
 		}
 
 		tokenString := strings.TrimPrefix(authHeader, bearerPrefix)
