@@ -6,8 +6,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/dev-mantas/authservice/pkg/token"
-
+	"github.com/begintwenty/auth-service/pkg/token"
 	"github.com/gin-gonic/gin"
 )
 
