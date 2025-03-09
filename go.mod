@@ -1,4 +1,4 @@
-module github.com/dev-mantas/authservice
+module github.com/dev-mantas/auth-service
 
 go 1.23.0
 
