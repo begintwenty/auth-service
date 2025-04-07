@@ -32,34 +32,28 @@ func New[T Authenticable](userRepo UserRepo[T]) *Service[T] {
 func (s *Service[T]) Authcheck(permissions ...string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		const bearerPrefix = "Bearer "
-		authHeader := c.GetHeader("Authorization")
 		var tokenString string
 
-		switch {
-		case strings.HasPrefix(authHeader, bearerPrefix):
+		if authHeader := c.GetHeader("Authorization"); strings.HasPrefix(authHeader, bearerPrefix) {
 			tokenString = strings.TrimPrefix(authHeader, bearerPrefix)
-
-		case c.Query("token") != "":
-			tokenString = c.Query("token")
-
-		default:
-			cookieToken, err := c.Cookie("X-JWT")
-			if err != nil || cookieToken == "" {
-				c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "Missing or invalid token"})
-				return
-			}
+		} else if qToken := c.Query("token"); qToken != "" {
+			tokenString = qToken
+		} else if cookieToken, err := c.Cookie("X-JWT"); err == nil {
 			tokenString = cookieToken
+		} else {
+			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "Missing token"})
+			return
 		}
 
 		unVerifiedUserID, err := token.VerifyJWT(tokenString)
 		if err != nil {
-			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "Invalid token"})
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
 			return
 		}
 
 		user, err := s.userRepo.FetchUserByIDAsString(c, unVerifiedUserID)
 		if err != nil {
-			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "Invalid token"})
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Invalid user"})
 			return
 		}
 
