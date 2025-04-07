@@ -45,8 +45,11 @@ func (s *Service[T]) Authcheck(permissions ...string) gin.HandlerFunc {
 			return
 		}
 
+		fmt.Println(tokenString)
+
 		unVerifiedUserID, err := token.VerifyJWT(tokenString)
 		if err != nil {
+			fmt.Println(1)
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
 			return
 		}
