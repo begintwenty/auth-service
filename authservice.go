@@ -33,17 +33,24 @@ func (s *Service[T]) Authcheck(permissions ...string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		const bearerPrefix = "Bearer "
 		authHeader := c.GetHeader("Authorization")
+		var tokenString string
 
-		if authHeader == "" || !strings.HasPrefix(authHeader, bearerPrefix) {
-			token := c.Query("token")
-			if token == "" {
-				c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "Invalid token"})
+		switch {
+		case strings.HasPrefix(authHeader, bearerPrefix):
+			tokenString = strings.TrimPrefix(authHeader, bearerPrefix)
+
+		case c.Query("token") != "":
+			tokenString = c.Query("token")
+
+		default:
+			cookieToken, err := c.Cookie("X-JWT")
+			if err != nil || cookieToken == "" {
+				c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "Missing or invalid token"})
 				return
 			}
-			authHeader = token
+			tokenString = cookieToken
 		}
 
-		tokenString := strings.TrimPrefix(authHeader, bearerPrefix)
 		unVerifiedUserID, err := token.VerifyJWT(tokenString)
 		if err != nil {
 			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "Invalid token"})
