@@ -41,7 +41,7 @@ func (s *Service[T]) Authcheck(permissions ...string) gin.HandlerFunc {
 		} else if cookieToken, err := c.Cookie("X-JWT"); err == nil {
 			tokenString = cookieToken
 		} else {
-			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "Missing token"})
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Missing token"})
 			return
 		}
 
