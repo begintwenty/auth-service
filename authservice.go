@@ -39,7 +39,7 @@ func (s *Service[T]) Authcheck(permissions ...string) gin.HandlerFunc {
 		} else if qToken := c.Query("token"); qToken != "" {
 			tokenString = qToken
 		} else {
-			host := c.Request.Host
+			host := c.GetHeader("Origin")
 			subdomain := strings.Split(host, ".")[0]
 
 			switch subdomain {
