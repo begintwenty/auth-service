@@ -64,12 +64,13 @@ func (s *Service[T]) Authcheck(permissions ...string) gin.HandlerFunc {
 			}
 
 			if tokenString == "" {
-				if userToken, err := c.Cookie("X-JWT"); err == nil {
-					tokenString = userToken
-				} else if adminToken, err := c.Cookie("AX-JWT"); err == nil {
+				if adminToken, err := c.Cookie("AX-JWT"); err == nil {
 					tokenString = adminToken
+				} else if userToken, err := c.Cookie("X-JWT"); err == nil {
+					tokenString = userToken
 				}
 			}
+
 		}
 
 		if tokenString == "" {
