@@ -38,10 +38,10 @@ func (s *Service[T]) Authcheck(permissions ...string) gin.HandlerFunc {
 			tokenString = strings.TrimPrefix(authHeader, bearerPrefix)
 		} else if qToken := c.Query("token"); qToken != "" {
 			tokenString = qToken
-		} else if adminToken, err := c.Cookie("AX-JWT"); err == nil {
-			tokenString = adminToken
 		} else if userToken, err := c.Cookie("X-JWT"); err == nil {
 			tokenString = userToken
+		} else if adminToken, err := c.Cookie("AX-JWT"); err == nil {
+			tokenString = adminToken
 		} else {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Missing token"})
 			return
