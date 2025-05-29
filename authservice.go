@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strings"
 
 	"github.com/begintwenty/auth-service/pkg/token"
@@ -39,16 +40,30 @@ func (s *Service[T]) Authcheck(permissions ...string) gin.HandlerFunc {
 		} else if qToken := c.Query("token"); qToken != "" {
 			tokenString = qToken
 		} else {
-			host := c.Request.Host
-			subdomain := strings.Split(host, ".")[0]
-			fmt.Println(host)
-			fmt.Println(subdomain)
-			switch subdomain {
-			case "admin":
-				tokenString, _ = c.Cookie("AX-JWT")
-			case "app":
-				tokenString, _ = c.Cookie("X-JWT")
-			default:
+			fmt.Println("Using cookie")
+			origin := c.GetHeader("Origin")
+			fmt.Println(origin)
+			if origin != "" {
+				u, err := url.Parse(origin)
+				fmt.Println(u)
+				if err == nil {
+					host := u.Host
+					subdomain := strings.Split(host, ".")[0]
+					fmt.Println(host)
+					fmt.Println(subdomain)
+
+					switch subdomain {
+					case "admin":
+						fmt.Println("using admin")
+						tokenString, _ = c.Cookie("AX-JWT")
+					case "app":
+						fmt.Println("using app")
+						tokenString, _ = c.Cookie("X-JWT")
+					}
+				}
+			}
+
+			if tokenString == "" {
 				if userToken, err := c.Cookie("X-JWT"); err == nil {
 					tokenString = userToken
 				} else if adminToken, err := c.Cookie("AX-JWT"); err == nil {
