@@ -39,9 +39,10 @@ func (s *Service[T]) Authcheck(permissions ...string) gin.HandlerFunc {
 		} else if qToken := c.Query("token"); qToken != "" {
 			tokenString = qToken
 		} else {
-			host := c.GetHeader("Origin")
+			host := c.Request.Host
 			subdomain := strings.Split(host, ".")[0]
-
+			fmt.Println(host)
+			fmt.Println(subdomain)
 			switch subdomain {
 			case "admin":
 				tokenString, _ = c.Cookie("AX-JWT")
