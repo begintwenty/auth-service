@@ -38,20 +38,22 @@ func (s *Service[T]) Authcheck(permissions ...string) gin.HandlerFunc {
 			tokenString = strings.TrimPrefix(authHeader, bearerPrefix)
 		} else if qToken := c.Query("token"); qToken != "" {
 			tokenString = qToken
-		} else if cookieToken, err := c.Cookie("X-JWT"); err == nil {
-			tokenString = cookieToken
+		} else if adminToken, err := c.Cookie("AX-JWT"); err == nil {
+			tokenString = adminToken
+		} else if userToken, err := c.Cookie("X-JWT"); err == nil {
+			tokenString = userToken
 		} else {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Missing token"})
 			return
 		}
 
-		unVerifiedUserID, err := token.VerifyJWT(tokenString)
+		userID, err := token.VerifyJWT(tokenString)
 		if err != nil {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
 			return
 		}
 
-		user, err := s.userRepo.FetchUserByIDAsString(c, unVerifiedUserID)
+		user, err := s.userRepo.FetchUserByIDAsString(c, userID)
 		if err != nil {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Invalid user"})
 			return
